@@ -17,7 +17,7 @@ exports.getAllBookings = async (req, res, next) => {
       .populate('guestId', 'name email phone')
       .populate('roomId', 'number type price')
       .skip(skip)
-      .limit(parseInt(limit))
+      .limit(Number(limit))
       .sort({ createdAt: -1 });
 
     const total = await Booking.countDocuments(filter);
@@ -101,7 +101,11 @@ exports.createBooking = async (req, res, next) => {
       status: status || 'pending',
     });
 
-    await booking.populate('guestId').populate('roomId');
+    // FIXED POPULATE
+    await booking.populate([
+      { path: 'guestId' },
+      { path: 'roomId' }
+    ]);
 
     console.log('✅ Booking created:', booking);
 
@@ -152,7 +156,12 @@ exports.updateBooking = async (req, res, next) => {
     }
 
     await booking.save();
-    await booking.populate('guestId').populate('roomId');
+
+    // FIXED POPULATE
+    await booking.populate([
+      { path: 'guestId' },
+      { path: 'roomId' }
+    ]);
 
     console.log('✅ Booking updated:', booking);
 

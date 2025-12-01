@@ -14,10 +14,20 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const app = express();
 
 // ============================
+// DATABASE CONNECTION
+// ============================
+connectDB().then(() => {
+  console.log('🗄️  Database ready for operations');
+}).catch(err => {
+  console.error('❌ Failed to connect to database:', err);
+  process.exit(1);
+});
+
+// ============================
 // MIDDLEWARE
 // ============================
 
-// CORS Middleware
+// CORS
 app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',
   credentials: true,
@@ -25,18 +35,18 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Body Parser Middleware
+// Body Parser
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// Logger Middleware
+// Logger
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 } else {
   app.use(morgan('combined'));
 }
 
-// Request logging middleware
+// Request Logging
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] ${req.method} ${req.path}`);
@@ -44,22 +54,11 @@ app.use((req, res, next) => {
 });
 
 // ============================
-// DATABASE CONNECTION
+// SEED DATABASE (OPTIONAL)
 // ============================
-connectDB().then(() => {
-  console.log('🗄️  Database ready for operations');
-}).catch(err => {
-  console.error('Failed to connect to database:', err);
-  process.exit(1);
-});
-
-// ============================
-// SEED DATABASE
-// ============================
-const SEED_DATABASE = process.env.SEED_DATABASE === 'true';
-if (SEED_DATABASE) {
+if (process.env.SEED_DATABASE === 'true') {
   console.log('🌱 Seeding database...');
-  seedData().catch(err => console.error('Seeding failed:', err));
+  seedData().catch(err => console.error('❌ Seeding failed:', err));
 }
 
 // ============================
@@ -75,7 +74,7 @@ app.get('/', (req, res) => {
 });
 
 // ============================
-// HEALTH CHECK ENDPOINT
+// SERVER HEALTH CHECK
 // ============================
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -96,6 +95,8 @@ app.get('/health', (req, res) => {
 // API HEALTH CHECK
 // ============================
 app.get('/api/health', (req, res) => {
+  const PORT = process.env.PORT || 5000;
+
   res.status(200).json({
     success: true,
     message: 'API is healthy',
@@ -103,7 +104,7 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV,
-    baseURL: `http://localhost:${process.env.PORT || 5000}/api`,
+    baseURL: `http://localhost:${PORT}/api`,
     endpoints: {
       rooms: {
         list: 'GET /api/rooms',
@@ -154,7 +155,7 @@ app.use((req, res) => {
 });
 
 // ============================
-// ERROR HANDLING MIDDLEWARE (Must be last)
+// ERROR HANDLER (MUST BE LAST)
 // ============================
 app.use(errorHandler);
 
@@ -162,29 +163,31 @@ app.use(errorHandler);
 // SERVER START
 // ============================
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
   console.log(`\n${'='.repeat(50)}`);
-  console.log('🚀 Server running on port', PORT);
+  console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV}`);
   console.log(`🌐 CORS Origin: ${process.env.CORS_ORIGIN || 'All origins'}`);
-  console.log('🗄️  Database ready for operations');
-  console.log(`${'='.repeat(50)}`);
-  console.log('\n📍 Available URLs:');
+  console.log(`🗄️  Database ready for operations`);
+  console.log(`${'='.repeat(50)}\n`);
+  console.log(`📍 Available URLs:`);
   console.log(`   🏠 Home: http://localhost:${PORT}/`);
-  console.log(`   ❤️  Health: http://localhost:${PORT}/health`);
+  console.log(`   ❤️ Health: http://localhost:${PORT}/health`);
   console.log(`   🏥 API Health: http://localhost:${PORT}/api/health`);
-  console.log(`\n📚 API Base URL: http://localhost:${PORT}/api`);
-  console.log(`\n✨ API is ready for testing!`);
+  console.log(`📚 API Base URL: http://localhost:${PORT}/api`);
+  console.log(`✨ API is ready for testing!`);
   console.log(`${'='.repeat(50)}\n`);
 });
 
-// Handle unhandled promise rejections
+// ============================
+// PROCESS HANDLERS
+// ============================
 process.on('unhandledRejection', (err) => {
   console.error('❌ Unhandled Rejection:', err);
   process.exit(1);
 });
 
-// Handle SIGTERM
 process.on('SIGTERM', () => {
   console.log('📢 SIGTERM signal received: closing HTTP server');
   process.exit(0);

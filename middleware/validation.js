@@ -25,7 +25,7 @@ const validateRequired = (fields) => {
   };
 };
 
-// Validate room creation
+// ✅ FIX: Validate room creation - Return proper middleware
 const validateRoomCreate = (req, res, next) => {
   const { number, type, price, capacity } = req.body;
 
@@ -60,7 +60,7 @@ const validateRoomCreate = (req, res, next) => {
   next();
 };
 
-// Validate room update
+// ✅ FIX: Validate room update
 const validateRoomUpdate = (req, res, next) => {
   const { price, capacity, type, status } = req.body;
 
@@ -95,7 +95,7 @@ const validateRoomUpdate = (req, res, next) => {
   next();
 };
 
-// Validate guest creation
+// ✅ FIX: Validate guest creation
 const validateGuestCreate = (req, res, next) => {
   const { name, email, phone, address } = req.body;
 
@@ -126,7 +126,7 @@ const validateGuestCreate = (req, res, next) => {
   next();
 };
 
-// Validate guest update
+// ✅ FIX: Validate guest update
 const validateGuestUpdate = (req, res, next) => {
   const { email, name } = req.body;
 
@@ -150,7 +150,7 @@ const validateGuestUpdate = (req, res, next) => {
   next();
 };
 
-// Validate booking creation
+// ✅ FIX: Validate booking creation
 const validateBookingCreate = (req, res, next) => {
   const { guestId, roomId, checkIn, checkOut, totalPrice } = req.body;
 
@@ -190,7 +190,7 @@ const validateBookingCreate = (req, res, next) => {
   next();
 };
 
-// Validate booking update
+// ✅ FIX: Validate booking update
 const validateBookingUpdate = (req, res, next) => {
   const { checkIn, checkOut, totalPrice, status } = req.body;
 
@@ -223,7 +223,7 @@ const validateBookingUpdate = (req, res, next) => {
   next();
 };
 
-// Validate MongoDB ObjectId
+// ✅ FIX: Validate MongoDB ObjectId
 const validateMongoId = (req, res, next) => {
   const { id } = req.params;
   const mongoIdRegex = /^[0-9a-fA-F]{24}$/;
@@ -238,7 +238,7 @@ const validateMongoId = (req, res, next) => {
   next();
 };
 
-// Validate pagination params
+// ✅ FIX: Validate pagination params
 const validatePagination = (req, res, next) => {
   const { page = 1, limit = 10 } = req.query;
 

@@ -1,39 +1,50 @@
 /**
- * Global error handler middleware
- * Must be the last middleware in the chain
+ * Global Error Handler Middleware
+ * Must be placed at the end of all routes
  */
 const errorHandler = (err, req, res, next) => {
   console.error('❌ Error caught by handler:', err);
 
-  // Default error values
-  let statusCode = err.statusCode || 500;
+  // Default values
+  const statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
 
-  // Mongoose validation error
+  // Handle Mongoose Validation Errors
   if (err.name === 'ValidationError') {
-    statusCode = 400;
-    const errors = Object.values(err.errors).map(error => error.message);
+    const errors = Object.values(err.errors).map(e => e.message);
     message = errors.join(', ');
+    return res.status(400).json({
+      success: false,
+      message,
+    });
   }
 
-  // Mongoose duplicate key error
+  // Handle Mongoose Duplicate Key Error
   if (err.code === 11000) {
-    statusCode = 400;
     const field = Object.keys(err.keyPattern)[0];
     message = `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`;
+    return res.status(400).json({
+      success: false,
+      message,
+    });
   }
 
-  // Mongoose cast error (invalid ID)
+  // Handle Invalid ObjectId Cast Error
   if (err.name === 'CastError') {
-    statusCode = 400;
-    message = 'Invalid ID format';
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid ID format',
+    });
   }
 
-  // Send error response
-  res.status(statusCode).json({
+  // Default fallback
+  return res.status(statusCode).json({
     success: false,
     message,
-    ...(process.env.NODE_ENV === 'development' && { error: err.message }),
+    ...(process.env.NODE_ENV === 'development' && {
+      stack: err.stack,
+      error: err.message,
+    }),
   });
 };
 

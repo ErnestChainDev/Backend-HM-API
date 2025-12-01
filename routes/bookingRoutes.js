@@ -15,11 +15,19 @@ const {
 
 const router = express.Router();
 
-// ✅ Middleware as second parameter
+// ✅ GET all bookings with pagination
 router.get('/', validatePagination, getAllBookings);
+
+// ✅ GET single booking by ID
 router.get('/:id', validateMongoId, getBookingById);
+
+// ✅ POST create new booking
 router.post('/', validateBookingCreate, createBooking);
+
+// ✅ PUT update booking
 router.put('/:id', validateMongoId, validateBookingUpdate, updateBooking);
+
+// ✅ DELETE booking
 router.delete('/:id', validateMongoId, deleteBooking);
 
 module.exports = router;

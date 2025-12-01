@@ -2,19 +2,16 @@ const Booking = require('../models/Booking');
 const Room = require('../models/Room');
 const Guest = require('../models/Guest');
 
-// @desc    Get all bookings with pagination and filtering
-// @route   GET /api/bookings?page=1&limit=10&status=confirmed
-// @access  Public
-exports.getAllBookings = async (req, res) => {
+// ==============================================
+// GET ALL BOOKINGS
+// ==============================================
+exports.getAllBookings = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
     const skip = (page - 1) * limit;
 
-    // Build filter
     const filter = {};
-    if (status) {
-      filter.status = status;
-    }
+    if (status) filter.status = status;
 
     const bookings = await Booking.find(filter)
       .populate('guestId', 'name email phone')
@@ -30,47 +27,47 @@ exports.getAllBookings = async (req, res) => {
       data: bookings,
       pagination: {
         total,
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: Number(page),
+        limit: Number(limit),
         pages: Math.ceil(total / limit),
       },
     });
   } catch (error) {
-    console.error('❌ Error in getAllBookings:', error);
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
-// @desc    Get single booking by ID
-// @route   GET /api/bookings/:id
-// @access  Public
-exports.getBookingById = async (req, res) => {
+// ==============================================
+// GET BOOKING BY ID
+// ==============================================
+exports.getBookingById = async (req, res, next) => {
   try {
     const booking = await Booking.findById(req.params.id)
       .populate('guestId')
       .populate('roomId');
 
     if (!booking) {
-      return res.status(404).json({ success: false, message: 'Booking not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found',
+      });
     }
 
     res.status(200).json({ success: true, data: booking });
   } catch (error) {
-    console.error('❌ Error in getBookingById:', error);
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
-// @desc    Create new booking
-// @route   POST /api/bookings
-// @access  Public
-exports.createBooking = async (req, res) => {
+// ==============================================
+// CREATE BOOKING
+// ==============================================
+exports.createBooking = async (req, res, next) => {
   try {
     const { guestId, roomId, checkIn, checkOut, totalPrice, notes, status } = req.body;
 
     console.log('📥 Booking data received:', req.body);
 
-    // Validation
     if (!guestId || !roomId || !checkIn || !checkOut || !totalPrice) {
       return res.status(400).json({
         success: false,
@@ -78,23 +75,11 @@ exports.createBooking = async (req, res) => {
       });
     }
 
-    // Verify guest exists
     const guest = await Guest.findById(guestId);
-    if (!guest) {
-      return res.status(404).json({
-        success: false,
-        message: 'Guest not found',
-      });
-    }
+    if (!guest) return res.status(404).json({ success: false, message: 'Guest not found' });
 
-    // Verify room exists
     const room = await Room.findById(roomId);
-    if (!room) {
-      return res.status(404).json({
-        success: false,
-        message: 'Room not found',
-      });
-    }
+    if (!room) return res.status(404).json({ success: false, message: 'Room not found' });
 
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
@@ -122,15 +107,14 @@ exports.createBooking = async (req, res) => {
 
     res.status(201).json({ success: true, data: booking });
   } catch (error) {
-    console.error('❌ Error in createBooking:', error);
-    res.status(400).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
-// @desc    Update booking
-// @route   PUT /api/bookings/:id
-// @access  Public
-exports.updateBooking = async (req, res) => {
+// ==============================================
+// UPDATE BOOKING
+// ==============================================
+exports.updateBooking = async (req, res, next) => {
   try {
     const { guestId, roomId, checkIn, checkOut, status, totalPrice, notes } = req.body;
 
@@ -142,38 +126,24 @@ exports.updateBooking = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Booking not found' });
     }
 
-    // Verify guest exists if updating
     if (guestId) {
       const guest = await Guest.findById(guestId);
-      if (!guest) {
-        return res.status(404).json({
-          success: false,
-          message: 'Guest not found',
-        });
-      }
+      if (!guest) return res.status(404).json({ success: false, message: 'Guest not found' });
       booking.guestId = guestId;
     }
 
-    // Verify room exists if updating
     if (roomId) {
       const room = await Room.findById(roomId);
-      if (!room) {
-        return res.status(404).json({
-          success: false,
-          message: 'Room not found',
-        });
-      }
+      if (!room) return res.status(404).json({ success: false, message: 'Room not found' });
       booking.roomId = roomId;
     }
 
-    // Update fields
     if (checkIn) booking.checkIn = new Date(checkIn);
     if (checkOut) booking.checkOut = new Date(checkOut);
     if (status) booking.status = status;
     if (totalPrice !== undefined) booking.totalPrice = Number(totalPrice);
     if (notes !== undefined) booking.notes = notes;
 
-    // Validate dates
     if (booking.checkOut <= booking.checkIn) {
       return res.status(400).json({
         success: false,
@@ -188,15 +158,14 @@ exports.updateBooking = async (req, res) => {
 
     res.status(200).json({ success: true, data: booking });
   } catch (error) {
-    console.error('❌ Error in updateBooking:', error);
-    res.status(400).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
-// @desc    Delete booking
-// @route   DELETE /api/bookings/:id
-// @access  Public
-exports.deleteBooking = async (req, res) => {
+// ==============================================
+// DELETE BOOKING
+// ==============================================
+exports.deleteBooking = async (req, res, next) => {
   try {
     const booking = await Booking.findByIdAndDelete(req.params.id);
 
@@ -206,9 +175,12 @@ exports.deleteBooking = async (req, res) => {
 
     console.log('✅ Booking deleted:', booking._id);
 
-    res.status(200).json({ success: true, message: 'Booking deleted successfully', data: booking });
+    res.status(200).json({
+      success: true,
+      message: 'Booking deleted successfully',
+      data: booking,
+    });
   } catch (error) {
-    console.error('❌ Error in deleteBooking:', error);
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };

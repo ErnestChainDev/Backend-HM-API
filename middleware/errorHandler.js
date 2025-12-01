@@ -1,9 +1,9 @@
 /**
- * Custom error handler middleware
- * Catches and formats errors consistently
+ * Global error handler middleware
+ * Must be the last middleware in the chain
  */
 const errorHandler = (err, req, res, next) => {
-  console.error('❌ Error:', err);
+  console.error('❌ Error caught by handler:', err);
 
   // Default error values
   let statusCode = err.statusCode || 500;
@@ -29,22 +29,11 @@ const errorHandler = (err, req, res, next) => {
     message = 'Invalid ID format';
   }
 
-  // JWT errors (if implementing auth later)
-  if (err.name === 'JsonWebTokenError') {
-    statusCode = 401;
-    message = 'Invalid token';
-  }
-
-  if (err.name === 'TokenExpiredError') {
-    statusCode = 401;
-    message = 'Token expired';
-  }
-
   // Send error response
   res.status(statusCode).json({
     success: false,
     message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    ...(process.env.NODE_ENV === 'development' && { error: err.message }),
   });
 };
 

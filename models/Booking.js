@@ -38,12 +38,19 @@ const bookingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Validate checkOut is after checkIn
-bookingSchema.pre('save', function (next) {
-  if (this.checkOut <= this.checkIn) {
-    next(new Error('Check-out date must be after check-in date'));
-  } else {
-    next();
+/**
+ * safer pre-validation hook
+ * - runs on both create() and save()
+ * - avoids "next is not a function"
+ */
+bookingSchema.pre('validate', function () {
+  if (this.checkIn && this.checkOut) {
+    if (this.checkOut <= this.checkIn) {
+      this.invalidate(
+        'checkOut',
+        'Check-out date must be after check-in date'
+      );
+    }
   }
 });
 

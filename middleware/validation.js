@@ -25,7 +25,7 @@ const validateRequired = (fields) => {
   };
 };
 
-// ✅ FIX: Validate room creation - Return proper middleware
+// ✅ FIX: Validate room creation
 const validateRoomCreate = (req, res, next) => {
   const { number, type, price, capacity } = req.body;
 
@@ -106,7 +106,6 @@ const validateGuestCreate = (req, res, next) => {
     });
   }
 
-  // Email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({
@@ -115,7 +114,6 @@ const validateGuestCreate = (req, res, next) => {
     });
   }
 
-  // Name validation
   if (name.trim().length < 2) {
     return res.status(400).json({
       success: false,
@@ -150,25 +148,49 @@ const validateGuestUpdate = (req, res, next) => {
   next();
 };
 
+// UPDATED BOOKING VALIDATION
 // ✅ FIX: Validate booking creation
 const validateBookingCreate = (req, res, next) => {
   const { guestId, roomId, checkIn, checkOut, totalPrice } = req.body;
 
-  if (!guestId || !roomId || !checkIn || !checkOut || totalPrice === undefined) {
-    return res.status(400).json({
-      success: false,
-      message: 'Please provide guestId, roomId, checkIn, checkOut, and totalPrice',
-    });
+  console.log('🔍 Validating booking creation:', { guestId, roomId, checkIn, checkOut, totalPrice });
+
+  // Required fields check
+  if (!guestId) {
+    return res.status(400).json({ success: false, message: 'guestId is required' });
+  }
+
+  if (!roomId) {
+    return res.status(400).json({ success: false, message: 'roomId is required' });
+  }
+
+  if (!checkIn) {
+    return res.status(400).json({ success: false, message: 'checkIn is required' });
+  }
+
+  if (!checkOut) {
+    return res.status(400).json({ success: false, message: 'checkOut is required' });
+  }
+
+  if (totalPrice === undefined || totalPrice === null) {
+    return res.status(400).json({ success: false, message: 'totalPrice is required' });
   }
 
   // Validate dates
   const checkInDate = new Date(checkIn);
   const checkOutDate = new Date(checkOut);
 
-  if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+  if (isNaN(checkInDate.getTime())) {
     return res.status(400).json({
       success: false,
-      message: 'Invalid date format. Use YYYY-MM-DD',
+      message: 'Invalid checkIn date format. Use YYYY-MM-DD',
+    });
+  }
+
+  if (isNaN(checkOutDate.getTime())) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid checkOut date format. Use YYYY-MM-DD',
     });
   }
 
@@ -180,13 +202,14 @@ const validateBookingCreate = (req, res, next) => {
   }
 
   // Validate price
-  if (typeof totalPrice !== 'number' || totalPrice < 0) {
+  if (typeof totalPrice !== 'number' || totalPrice <= 0) {
     return res.status(400).json({
       success: false,
       message: 'Total price must be a positive number',
     });
   }
 
+  console.log('✅ Booking validation passed');
   next();
 };
 
@@ -206,7 +229,7 @@ const validateBookingUpdate = (req, res, next) => {
     }
   }
 
-  if (totalPrice !== undefined && (typeof totalPrice !== 'number' || totalPrice < 0)) {
+  if (totalPrice !== undefined && (typeof totalPrice !== 'number' || totalPrice <= 0)) {
     return res.status(400).json({
       success: false,
       message: 'Total price must be a positive number',
@@ -223,7 +246,7 @@ const validateBookingUpdate = (req, res, next) => {
   next();
 };
 
-// ✅ FIX: Validate MongoDB ObjectId
+// Validate Mongo ID
 const validateMongoId = (req, res, next) => {
   const { id } = req.params;
   const mongoIdRegex = /^[0-9a-fA-F]{24}$/;
@@ -238,7 +261,7 @@ const validateMongoId = (req, res, next) => {
   next();
 };
 
-// ✅ FIX: Validate pagination params
+// Validate Pagination
 const validatePagination = (req, res, next) => {
   const { page = 1, limit = 10 } = req.query;
 
